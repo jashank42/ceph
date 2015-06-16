@@ -466,6 +466,12 @@ public:
 
   void set_write_error_handler(Context *c);
 
+  /**
+   * Cause any ongoing waits to error out with -EAGAIN, set error
+   * to -EAGAIN.
+   */
+  void shutdown();
+
   // Synchronous getters
   // ===================
   // TODO: need some locks on reads for true safety

@@ -1367,3 +1367,17 @@ C_OnFinisher *Journaler::wrap_finisher(Context *c)
     return NULL;
   }
 }
+
+void Journaler::shutdown()
+{
+  Mutex::Locker l(lock);
+
+  // Kick out anyone reading from journal
+  error = -EAGAIN;
+  if (on_readable) {
+    C_OnFinisher *f = on_readable;
+    on_readable = 0;
+    f->complete(-EAGAIN);
+  }
+}
+
