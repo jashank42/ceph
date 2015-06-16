@@ -460,19 +460,31 @@ void MDLog::cap()
 
 void MDLog::shutdown()
 {
-  dout(5) << "shutdown" << dendl;
-  if (!submit_thread.is_started())
-    return;
-
   assert(mds->mds_lock.is_locked_by_me());
-  mds->mds_lock.Unlock();
 
-  submit_mutex.Lock();
-  stopping = true;
-  submit_cond.Signal();
-  submit_mutex.Unlock();
+  dout(5) << "shutdown" << dendl;
+  if (submit_thread.is_started()) {
+    mds->mds_lock.Unlock();
 
-  mds->mds_lock.Lock();
+    submit_mutex.Lock();
+    stopping = true;
+    submit_cond.Signal();
+    submit_mutex.Unlock();
+
+    mds->mds_lock.Lock();
+
+    submit_thread.join();
+  }
+
+  // Replay thread can be stuck inside e.g. Journaler::wait_for_readable,
+  // so we need to shutdown the journaler first.
+  journaler->shutdown();
+
+  if (replay_thread.is_started()) {
+    mds->mds_lock.Unlock();
+    replay_thread.join();
+    mds->mds_lock.Lock();
+  }
 }
 
 
