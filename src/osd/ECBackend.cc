@@ -249,7 +249,9 @@ void ECBackend::handle_recovery_push(
 		      get_parent()->whoami_shard().shard);
   } else {
     tobj = ghobject_t(get_parent()->get_temp_recovery_object(op.version,
-							     op.soid.snap));
+							     op.soid.snap),
+		      ghobject_t::NO_GEN,
+		      get_parent()->whoami_shard().shard);
     if (op.before_progress.first) {
       dout(10) << __func__ << ": Adding oid "
 	       << tobj.hobj << " in the temp collection" << dendl;
